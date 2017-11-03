@@ -19,27 +19,58 @@ function regularPolygon(ctx, center, radius, sides) {
 
 
 let canvas = document.getElementById('canvas');
-let width = 400;
-let height = 400;
-let nShapes = 10;
-let maxSides = 10;
-let maxRadius = 200;
+canvas.width = document.documentElement.clientWidth;
+canvas.height = document.documentElement.clientHeight;
 let ctx = canvas.getContext('2d');
+let currentCenter = {x:0, y:0};
+let currentColor;
+let lastCanvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('touchstart', startDraw, {passive: false});
+canvas.addEventListener("mouseup", stopDraw);
+canvas.addEventListener("touchend", stopDraw, {passive: false});
 
 
-ctx.beginPath();
-
-for(var i = 0; i < nShapes; i++) {
-  let radius = Math.random() * maxRadius;
-  let circumf = radius * 2;
-  // let sides = 3 + Math.floor(Math.random() * (maxSides-3)); // random # sides
-  let sides = 3 + Math.floor(radius*.1); // # sides based on radius
-  let center = {
-    x: 200, y: 200
-    // x:radius + Math.random()*(width-circumf), 
-    // y:radius + Math.random()*(height-circumf)
+function startDraw(e) {
+  e.preventDefault();
+  currentCenter = {
+    x: e.layerX, y: e.layerY
   };
-  regularPolygon(ctx, center, radius, sides);
+  currentColor = [
+    Math.round(Math.random() * 255),
+    Math.round(Math.random() * 255),
+    Math.round(Math.random() * 255),
+    Math.random()
+  ].join(',');
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('touchmove', draw);
 }
 
-ctx.stroke();
+function draw(e) {
+  e.preventDefault();
+  
+  let a = currentCenter.x - e.layerX;
+  let b = currentCenter.y - e.layerY;
+
+  let radius = Math.sqrt( a*a + b*b );
+  let sides = 3 + Math.floor(radius*.08); // # sides based on radius
+  
+  ctx.putImageData(lastCanvasData, 0, 0);
+  ctx.beginPath();
+  regularPolygon(ctx, currentCenter, radius, sides);
+
+  
+  
+  ctx.fillStyle = 'rgba(' + currentColor + ')';
+  ctx.fill();
+  ctx.stroke();
+}
+
+function stopDraw(e) {
+  e.preventDefault();
+  lastCanvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  canvas.removeEventListener('mousemove', draw);
+}
+
+
